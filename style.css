@@ -32,7 +32,6 @@ canvas {
     align-items: center;
     display: flex;
     overflow: auto;
-
     max-width: 90vw;
 }
 
