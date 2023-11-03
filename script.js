@@ -1,44 +1,83 @@
-
 const startButton = document.getElementById('startButton');
-const pauseButton = document.getElementById('pauseButton');
 const drawButton = document.getElementById('drawButton');
 const randomButton = document.getElementById('randomButton');
-let paused = 0;
+
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const resolution = 20;
 canvas.width = 1500;
 canvas.height = 1500;
-
-
-
 const cols = canvas.width / resolution;
 const rows = canvas.height / resolution;
-// const gridContainer = document.getElementById('grid-container');
+
+let isDrawing = false;
+let isRunning = false;
+let isDrawingMode = false;
+
 
 // // Create 2D array
 let mainGrid = Array.from({ length: rows }, () => Array(cols).fill(0));
 
 startButton.addEventListener('click', function () {
-    start()
-});
-
-pauseButton.addEventListener('click', function () {
-    if (paused)
-        paused = 0;
-    else
-        paused = 1;
+    !isRunning ? start() : stop();
 });
 
 drawButton.addEventListener('click', function () {
+    isDrawingMode = !isDrawingMode
     drawGrid()
-    canvas.addEventListener("click", mouseDraw);
+    if (isDrawingMode) {
+        canvas.addEventListener("mousedown", startDraw);
+        canvas.addEventListener('mousemove', mouseDraw);
+        canvas.addEventListener("mouseup", endDraw);
+    }
+    else {
+        canvas.removeEventListener("mousedown", startDraw);
+        canvas.removeEventListener('mousemove', mouseDraw);
+        canvas.removeEventListener("mouseup", endDraw);
+    }
 });
 
 randomButton.addEventListener('click', function () {
     creat2DArray(rows, cols)
     drawGrid()
 });
+
+
+const startDraw = (event) => {
+    isDrawing = true;
+    mouseDraw(event);
+}
+
+const endDraw = () => {
+    isDrawing = false;
+    ctx.beginPath();
+}
+
+const mouseDraw = (event) => {
+
+    if (!isDrawing) return;
+
+    const rect = canvas.getBoundingClientRect()
+
+    const scaleX = canvas.width / rect.width; // Scale to match the canvas size
+    const scaleY = canvas.height / rect.height; // Scale to match the canvas size
+
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
+
+    const xx = Math.floor(x / resolution)
+    const yy = Math.floor(y / resolution)
+
+    mainGrid[xx][yy] = 1
+
+    ctx.fillStyle = 'red';
+    ctx.fillRect(xx * resolution, yy * resolution, resolution, resolution);
+
+
+    console.log(`X: ${xx} , Y: ${yy} , rows: ${rows} cols:${cols}`);
+
+}
 
 
 const creat2DArray = (rows, cols) => {
@@ -64,38 +103,6 @@ const drawGrid = () => {
             ctx.strokeRect(x, y, resolution, resolution);
         }
     }
-}
-
-const mouseDraw = (event) => {
-    const rect = canvas.getBoundingClientRect()
-
-    const scaleX = canvas.width / rect.width; // Scale to match the canvas size
-    const scaleY = canvas.height / rect.height; // Scale to match the canvas size
-
-    const x = (event.clientX - rect.left) * scaleX;
-    const y = (event.clientY - rect.top) * scaleY;
-
-
-
-    const xx = Math.floor(x / resolution)
-    const yy = Math.floor(y / resolution)
-
-    mainGrid[xx][yy] = 1
-
-    ctx.fillStyle = 'red';
-    ctx.fillRect(xx * resolution, yy * resolution, resolution, resolution);
-
-
-    console.log(`X: ${xx} , Y: ${yy} , rows: ${rows} cols:${cols}`);
-
-
-    // const x = Math.floor(xx / resolution)
-    // const y = Math.floor(yy / resolution)
-
-    // ctx.fillStyle = 'black';
-    // ctx.fillRect(x, y, resolution, resolution);
-
-    // mainGrid[x, y] = 1;
 }
 
 const updateGrid = () => {
@@ -148,17 +155,25 @@ const framesPerUpdate = 10;
 
 function update() {
     frameCount++;
+    if (isRunning) {
+        if (frameCount >= framesPerUpdate) {
+            frameCount = 0;
 
-    if (frameCount >= framesPerUpdate && !paused) {
-        frameCount = 0;
-
-        updateGrid();
-        drawGrid();
+            updateGrid();
+            drawGrid();
+        }
+        requestAnimationFrame(update);
     }
-    requestAnimationFrame(update);
 }
 
 function start() {
-    update();
+    isRunning = true;
+    startButton.textContent = "Stop"
+    update()
+}
+
+function stop() {
+    isRunning = false;
+    startButton.textContent = "Start"
 }
 
