@@ -1,5 +1,6 @@
 const startButton = document.getElementById('startButton');
 const drawButton = document.getElementById('drawButton');
+const eraseButton = document.getElementById('eraseButton');
 const randomButton = document.getElementById('randomButton');
 
 
@@ -12,8 +13,11 @@ const cols = canvas.width / resolution;
 const rows = canvas.height / resolution;
 
 let isDrawing = false;
+let isErasing = false;
 let isRunning = false;
+
 let isDrawingMode = false;
+let isErasingMode = false;
 
 
 // // Create 2D array
@@ -25,6 +29,7 @@ startButton.addEventListener('click', function () {
 
 drawButton.addEventListener('click', function () {
     isDrawingMode = !isDrawingMode
+    isErasingMode = false;
     drawGrid()
     if (isDrawingMode) {
         canvas.addEventListener("mousedown", startDraw);
@@ -37,6 +42,23 @@ drawButton.addEventListener('click', function () {
         canvas.removeEventListener("mouseup", endDraw);
     }
 });
+
+eraseButton.addEventListener('click', function () {
+    isErasingMode = !isErasingMode
+    isDrawingMode = false
+    drawGrid()
+    if (isErasingMode) {
+        canvas.addEventListener("mousedown", startDraw);
+        canvas.addEventListener('mousemove', mouseDraw);
+        canvas.addEventListener("mouseup", endDraw);
+    }
+    else {
+        canvas.removeEventListener("mousedown", startDraw);
+        canvas.removeEventListener('mousemove', mouseDraw);
+        canvas.removeEventListener("mouseup", endDraw);
+    }
+});
+
 
 randomButton.addEventListener('click', function () {
     creat2DArray(rows, cols)
@@ -69,13 +91,40 @@ const mouseDraw = (event) => {
     const xx = Math.floor(x / resolution)
     const yy = Math.floor(y / resolution)
 
-    mainGrid[xx][yy] = 1
 
-    ctx.fillStyle = 'red';
+    if (isDrawingMode) {
+        mainGrid[xx][yy] = 1
+
+        ctx.fillStyle = 'red';
+    }
+    else {
+        mainGrid[xx][yy] = 0
+
+        ctx.fillStyle = 'white';
+    }
     ctx.fillRect(xx * resolution, yy * resolution, resolution, resolution);
 
+}
 
-    console.log(`X: ${xx} , Y: ${yy} , rows: ${rows} cols:${cols}`);
+const mouseErase = (event) => {
+
+    if (!isErasing) return;
+
+    const rect = canvas.getBoundingClientRect()
+
+    const scaleX = canvas.width / rect.width; // Scale to match the canvas size
+    const scaleY = canvas.height / rect.height; // Scale to match the canvas size
+
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
+
+    const xx = Math.floor(x / resolution)
+    const yy = Math.floor(y / resolution)
+
+    mainGrid[xx][yy] = 0
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(xx * resolution, yy * resolution, resolution, resolution);
 
 }
 
